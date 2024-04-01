@@ -1,70 +1,70 @@
-import mongoose,{Document,Model,Schema} from 'mongoose'
+import mongoose, { Document, Model, Schema } from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 // Make model user
 const emailRegexPatten: RegExp = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g
 
-export interface IUser extends Document{
+export interface IUser extends Document {
     name: string
     email: string
-    password: string 
-    avatar:{
+    password: string
+    avatar: {
         public_id: string
-        url:string
+        url: string
     }
     role: string
     isVerified: boolean
-    course: Array<{courseId:string}>
-    comparePassword: (password:string)=>Promise<boolean>
+    course: Array<{ courseId: string }>
+    comparePassword: (password: string) => Promise<boolean>
 }
 
 const userSchema: Schema<IUser> = new mongoose.Schema({
-    name:{
+    name: {
         type: String,
         required: [true, "Please enter your name"]
     },
 
-    email:{
+    email: {
         type: String,
         required: [true, "Please enter your email"],
-        validate:{
-            validator: function(value:string){
+        validate: {
+            validator: function (value: string) {
                 return emailRegexPatten.test(value);
             },
-            message:"please enter a valid email"
+            message: "please enter a valid email"
         },
         unique: true
     },
 
-    password:{
+    password: {
         type: String,
-        required:[true,"Please enter your password"],
+        required: [true, "Please enter your password"],
         minlength: [6, "Password must be at least 6 characters"],
         select: false
     },
 
-    avatar:{
+    avatar: {
         public_id: String,
         url: String,
     },
 
-    role:{
+    role: {
         type: String,
         default: 'user'
     },
 
-    isVerified:{
+    isVerified: {
         type: Boolean
     },
 
-    course:{
+    course: {
         courseId: String
     }
-},{timestamps: true })
+}, { timestamps: true })
 
 // Hash password before Saving
-userSchema.pre<IUser>('save', async function(next) {
-    if(this.isModified('password')){
+userSchema.pre<IUser>('save', async function (next) {
+    if (this.isModified('password')) {
         next()
     }
     this.password = await bcrypt.hash(this.password, 10)
@@ -72,6 +72,9 @@ userSchema.pre<IUser>('save', async function(next) {
 })
 
 // compare password
-userSchema.methods.comparePassword = async function (enteredPassword: string):Promise<boolean>{
-    return await bcrypt.compare(enteredPassword,this.password)
+userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+    return await bcrypt.compare(enteredPassword, this.password)
 }
+
+const userModel: Model<IUser> = mongoose.model("User", userSchema)
+export default userModel
