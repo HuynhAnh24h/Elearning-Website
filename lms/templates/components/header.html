@@ -52,7 +52,7 @@
         </ul>
 
         <!-- Search -->
-        <form class="d-none d-wd-flex ms-5 w-xl-450p">
+        <form method="get" action="{% url 'search_course'%}" class="d-none d-wd-flex ms-5 w-xl-450p">
             <div class="input-group border rounded">
                 <div class="input-group-prepend">
                     <button class="btn btn-sm my-2 my-sm-0 text-secondary icon-xs d-flex align-items-center"
@@ -70,7 +70,7 @@
                     </button>
                 </div>
                 <input class="form-control form-control-sm border-0 ps-0" type="search"
-                    placeholder="Tìm khoá học của bạn ..." aria-label="Search">
+                    placeholder="Tìm khoá học của bạn ..." aria-label="Search" name="query">
             </div>
         </form>
 
@@ -107,9 +107,8 @@
                 </li>
                 <li class="nav-item dropdown dropdown-full-width">
                     <a class="nav-link text-gigas" href="{% url 'single_course' %}">
-                        Khoá học
+                        Tất cả khoá học
                     </a>
-
                 </li>
                 <li class="nav-item dropdown dropdown-full-width">
                     <a class="nav-link text-gigas" href="{% url 'contact_us' %}">
@@ -179,7 +178,7 @@
             {% if user.is_authenticated and user.first_name == '' %}
             <li class="nav-item dropdown border-0 px-1 px-md-3">
                 <a class="nav-link dropdown-toggle" id="user" data-bs-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">
-                  {{user.username}}
+                  Hello{{user.username}}
                </a>
 
                <ul class="dropdown-menu border-xl shadow-none" aria-labelledby="user">
@@ -189,8 +188,8 @@
                        </a>
                    </li>
                    <li class="dropdown-item">
-                       <a class="dropdown-link" href="">
-                           Enrolled Courses
+                       <a class="dropdown-link" href="{% url 'my_course'%}">
+                           Khoá học của tôi
                        </a>
                    </li>
                    <li class="dropdown-item">

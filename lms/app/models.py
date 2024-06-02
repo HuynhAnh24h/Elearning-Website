@@ -1,4 +1,7 @@
 from django.db import models
+from django.utils.text import slugify
+from django.db.models.signals import pre_save
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -11,12 +14,13 @@ class Categories(models.Model):
         return self.name
     
     def get_all_category(self):
-        return  Categories.objects.all().order_by('id')[0:5]
+        return  Categories.objects.all().order_by('-id')
 
 # Tác giả
 class Author(models.Model):
     author_profile = models.ImageField(upload_to="Media/author")
     name = models.CharField(max_length=100, null=True)
+    jobs = models.CharField(max_length=100, null=True)
     about_author = models.TextField()
 
     def __str__(self):
@@ -45,9 +49,74 @@ class Course(models.Model):
     slug = models.SlugField(default='', max_length=500, null=True, blank=True)
     status = models.CharField(choices=STATUS,max_length=100,null=True)
     level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True)
+    certificate = models.BooleanField(null=True, default=False)
+    def __str__(self):
+        return self.title
     
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse("course_detail", kwargs={'slug': self.slug})
+
+# Tạo đường dẫn Slug
+
+def create_slug(instance, new_slug=None):
+    slug = slugify(instance.title)
+    if new_slug is not None:
+        slug = new_slug
+    qs = Course.objects.filter(slug=slug).order_by('-id')
+    exists = qs.exists()
+    if exists:
+        new_slug = "%s-%s" % (slug, qs.first().id)
+        return create_slug(instance, new_slug=new_slug)
+    return slug
+
+
+def pre_save_post_receiver(sender, instance, *args, **kwargs):
+    if not instance.slug:
+        instance.slug = create_slug(instance)
+
+pre_save.connect(pre_save_post_receiver, Course)
+    
+
+class Will_Learn(models.Model):
+    course = models.ForeignKey(Course,on_delete=models.CASCADE)
+    points = models.CharField(max_length=500)
+
+    def __str__(self):
+        return self.points
+    
+class Requirements(models.Model):
+     course = models.ForeignKey(Course,on_delete=models.CASCADE)
+     points = models.CharField(max_length=500)
+
+     def __str__(self):
+         return self.points
+     
+class Lesson(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name + " - " + self.course.title
+
+class Video(models.Model):
+    serial_number = models.IntegerField(null = True)
+    thumbnail = models.ImageField(upload_to="Media/video_thumbnail",null=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    youtube_id = models.CharField(max_length=200)
+    time_duration = models.IntegerField(null = True)
+    preview = models.BooleanField(default=False)
+
     def __str__(self):
         return self.title
 
+class UserCourse(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    paid = models.BooleanField(default=0)
+    date = models.DateTimeField(auto_now_add=True)
 
-    
+    def __str__(self):
+        return self.user.first_name + " - " + self.course.title
